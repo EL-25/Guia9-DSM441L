@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="32dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="INICIAR SESIÓN"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp" />
+
+    <EditText
+        android:id="@+id/txtUserLogin"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="Nick / Usuario"
+        android:inputType="text"
+        android:layout_marginBottom="12dp" />
+
+    <EditText
+        android:id="@+id/txtPassLogin"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="Contraseña"
+        android:inputType="textPassword"
+        android:layout_marginBottom="20dp" />
+
+    <Button
+        android:id="@+id/btnLogin"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Ingresar" />
+
+    <Button
+        android:id="@+id/btnIrRegistro"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:text="Registrarse"
+        style="?android:attr/borderlessButtonStyle" />
+</LinearLayout>

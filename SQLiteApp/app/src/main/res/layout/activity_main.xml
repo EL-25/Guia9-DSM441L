@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="15dp"
         android:layout_marginBottom="5dp"
-        android:text="ADMINISTRACION DE PRODUCTOS"  
+        android:text="ADMINISTRACION DE PRODUCTOS"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/textView2"

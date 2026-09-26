@@ -3,13 +3,13 @@ package com.example.sqliteapp
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.sqliteapp.db.HelperDB
 import com.example.sqliteapp.model.Categoria
 import com.example.sqliteapp.model.Productos
+
 class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var managerCategoria: Categoria? = null
     private var managerProductos: Productos? = null
@@ -26,22 +26,31 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var btnActualizar: Button? = null
     private var btnEliminar: Button? = null
     private var btnBuscar: Button? = null
+    private var listCategorias = ArrayList<String>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         txtIdDB = findViewById(R.id.txtIdDB)
         txtId = findViewById(R.id.txtId)
         txtNombre = findViewById(R.id.txtNombre)
         txtPrecio = findViewById(R.id.txtPrecio)
         txtCantidad = findViewById(R.id.txtCantidad)
-        cmbCategorias = findViewById<Spinner>(R.id.cmbCategorias)
+        cmbCategorias = findViewById(R.id.cmbCategorias)
         btnAgregar = findViewById(R.id.btnAgregar)
         btnActualizar = findViewById(R.id.btnActualizar)
         btnEliminar = findViewById(R.id.btnEliminar)
         btnBuscar = findViewById(R.id.btnBuscar)
+
         dbHelper = HelperDB(this)
         db = dbHelper!!.writableDatabase
+
+        managerCategoria = Categoria(this)
+        managerProductos = Productos(this)
+
         setSpinnerCategorias()
+
         btnAgregar!!.setOnClickListener(this)
         btnActualizar!!.setOnClickListener(this)
         btnEliminar!!.setOnClickListener(this)
@@ -49,135 +58,148 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     fun setSpinnerCategorias() {
-// Cargando valores por defecto
-        managerCategoria = Categoria(this)
         managerCategoria!!.insertValuesDefault()
         cursor = managerCategoria!!.showAllCategoria()
-        var cat = ArrayList<String>()
+        listCategorias.clear()
+
         if (cursor != null && cursor!!.count > 0) {
-            cursor!!.moveToFirst()
-            cat.add(cursor!!.getString(1))
-            do {
-                cat.add(cursor!!.getString(1))
-            } while (cursor!!.moveToNext())
+            if (cursor!!.moveToFirst()) {
+                do {
+                    listCategorias.add(cursor!!.getString(1))
+                } while (cursor!!.moveToNext())
+            }
         }
-        var adaptador = ArrayAdapter(this, android.R.layout.simple_spinner_item, cat)
+        val adaptador = ArrayAdapter(this, android.R.layout.simple_spinner_item, listCategorias)
         adaptador.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         cmbCategorias!!.adapter = adaptador
     }
 
     override fun onClick(view: View) {
-        managerProductos = Productos(this)
         val nombre: String = txtNombre!!.text.toString().trim()
         val precio: String = txtPrecio!!.text.toString().trim()
         val cantidad: String = txtCantidad!!.text.toString().trim()
-        val categoria: String = cmbCategorias!!.selectedItem.toString().trim()
-        val idcategoria = managerCategoria!!.searchID(categoria)
-        val idproducto = txtId!!.text.toString().trim()
+        val categoria: String = cmbCategorias!!.selectedItem?.toString()?.trim() ?: ""
+        val idproducto: String = txtId!!.text.toString().trim()
+
         if (db != null) {
-            if (view === btnAgregar) {
-                if (vericarFormulario("insertar")) {
-                    managerProductos!!.addNewProducto(
-                        idcategoria,
-                        nombre,
-                        precio.toDouble(),
-                        cantidad.toInt()
-                    )
-                    Toast.makeText(
-                        this, "Producto agregado",
-                        Toast.LENGTH_LONG
-                    ).show()
+            when (view) {
+                btnAgregar -> {
+                    if (vericarFormulario("insertar")) {
+                        val idcategoria = managerCategoria!!.searchID(categoria)
+                        managerProductos!!.addNewProducto(
+                            idcategoria,
+                            nombre,
+                            precio.toDouble(),
+                            cantidad.toInt()
+                        )
+                        Toast.makeText(this, "Producto agregado con éxito", Toast.LENGTH_SHORT).show()
+                        limpiarCampos()
+                    }
                 }
-            } else if (view === btnActualizar) {
-                if (vericarFormulario("actualizar")) {
-                    managerProductos!!.updateProducto(
-                        idproducto.toInt(),
-                        idcategoria,
-                        nombre,
-                        precio.toDouble(),
-                        cantidad.toInt()
-                    )
-                    Toast.makeText(
-                        this, "Producto actualizado",
-                        Toast.LENGTH_LONG
-                    ).show()
+                btnActualizar -> {
+                    if (vericarFormulario("actualizar")) {
+                        val idcategoria = managerCategoria!!.searchID(categoria)
+                        managerProductos!!.updateProducto(
+                            idproducto.toInt(),
+                            idcategoria,
+                            nombre,
+                            precio.toDouble(),
+                            cantidad.toInt()
+                        )
+                        Toast.makeText(this, "Producto actualizado con éxito", Toast.LENGTH_SHORT).show()
+                        limpiarCampos()
+                    }
                 }
-            } else if (view === btnEliminar) {
-                if (vericarFormulario("eliminar")) {
-// manager.eliminar(1);
-                    managerProductos!!.deleteProducto(idproducto.toInt())
-                    Toast.makeText(
-                        this, "Producto eliminado",
-                        Toast.LENGTH_LONG
-                    ).show()
+                btnEliminar -> {
+                    if (vericarFormulario("eliminar")) {
+                        managerProductos!!.deleteProducto(idproducto.toInt())
+                        Toast.makeText(this, "Producto eliminado con éxito", Toast.LENGTH_SHORT).show()
+                        limpiarCampos()
+                    }
                 }
-            } else if (view === btnBuscar) {
-                /*IMPLEMENTE LA BUSQUEDA*/
-            } else {
-                Toast.makeText(
-                    this, "No se puede conectar a la Base de Datos",
-                    Toast.LENGTH_LONG
-                )
-                    .show()
+                btnBuscar -> {
+                    if (vericarFormulario("buscar")) {
+                        val c: Cursor? = managerProductos!!.searchProducto(idproducto.toInt())
+                        if (c != null && c.moveToFirst()) {
+                            // Columnas: 0: idproductos, 1: idcategoria, 2: descripcion, 3: precio, 4: cantidad
+                            val idCat = c.getInt(1)
+                            val desc = c.getString(2)
+                            val prec = c.getDouble(3)
+                            val cant = c.getInt(4)
+
+                            txtNombre!!.setText(desc)
+                            txtPrecio!!.setText(prec.toString())
+                            txtCantidad!!.setText(cant.toString())
+
+                            // Cargar nombre de categoría en el Spinner
+                            val nombreCat = managerCategoria!!.searchNombre(idCat)
+                            if (nombreCat != null) {
+                                val pos = listCategorias.indexOf(nombreCat)
+                                if (pos >= 0) cmbCategorias!!.setSelection(pos)
+                            }
+                            Toast.makeText(this, "Producto encontrado", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this, "No se encontró ningún producto con el código $idproducto", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
             }
+        } else {
+            Toast.makeText(this, "No se puede conectar a la Base de Datos", Toast.LENGTH_LONG).show()
         }
     }
 
     private fun vericarFormulario(opc: String): Boolean {
-        var notificacion: String = "Se han generado algunos errores, favor verifiquelos"
+        var notificacion = "Se han generado algunos errores, favor verifíquelos"
         var response = true
-        var idproducto_v = true
-        var idcategoria_v = true
-        var nombre_v = true
-        var precio_v = true
-        var cantidad_v = true
-        val nombre: String = txtNombre!!.text.toString().trim()
-        val precio: String = txtPrecio!!.text.toString().trim()
-        val cantidad: String = txtCantidad!!.text.toString().trim()
-        val categoria: String = cmbCategorias!!.selectedItem.toString().trim()
-        val idproducto: String = txtId!!.text.toString().trim()
-        if (opc === "insertar" || opc == "actualizar") {
+
+        val nombre = txtNombre!!.text.toString().trim()
+        val precio = txtPrecio!!.text.toString().trim()
+        val cantidad = txtCantidad!!.text.toString().trim()
+        val idproducto = txtId!!.text.toString().trim()
+
+        if (opc == "buscar" || opc == "eliminar") {
+            if (idproducto.isEmpty()) {
+                txtId!!.error = "Ingrese el código del producto"
+                txtId!!.requestFocus()
+                notificacion = "Debe ingresar el código del producto"
+                response = false
+            }
+        } else if (opc == "insertar" || opc == "actualizar") {
+            if (opc == "actualizar" && idproducto.isEmpty()) {
+                txtId!!.error = "Ingrese el código para actualizar"
+                txtId!!.requestFocus()
+                notificacion = "Debe ingresar el código del producto"
+                response = false
+            }
             if (nombre.isEmpty()) {
                 txtNombre!!.error = "Ingrese el nombre del producto"
                 txtNombre!!.requestFocus()
-                nombre_v = false
+                response = false
             }
             if (precio.isEmpty()) {
                 txtPrecio!!.error = "Ingrese el precio del producto"
                 txtPrecio!!.requestFocus()
-                precio_v = false
+                response = false
             }
             if (cantidad.isEmpty()) {
                 txtCantidad!!.error = "Ingrese la cantidad inicial"
                 txtCantidad!!.requestFocus()
-                cantidad_v = false
-            }
-            if (opc == "actualizar") {
-                if (idproducto.isEmpty()) {
-                    idproducto_v = false
-                    notificacion = "No se ha seleccionado un producto"
-                }
-                response =
-                    !(nombre_v == false || precio_v == false || cantidad_v == false ||
-                            idproducto_v == false)
-            } else {
-                response = !(nombre_v == false || precio_v == false || cantidad_v ==
-                        false)
-            }
-        } else if (opc === "eliminar" || opc == "buscar") {
-            if (idproducto.isEmpty()) {
                 response = false
-                notificacion = "No se ha seleccionado un producto"
             }
         }
-//Mostrar errores
-        if (response == false) {
-            Toast.makeText(
-                this,
-                notificacion,
-                Toast.LENGTH_LONG
-            ).show()
+
+        if (!response) {
+            Toast.makeText(this, notificacion, Toast.LENGTH_LONG).show()
         }
         return response
+    }
+
+    private fun limpiarCampos() {
+        txtId!!.setText("")
+        txtNombre!!.setText("")
+        txtPrecio!!.setText("")
+        txtCantidad!!.setText("")
+        if (cmbCategorias!!.adapter.count > 0) cmbCategorias!!.setSelection(0)
     }
 }
